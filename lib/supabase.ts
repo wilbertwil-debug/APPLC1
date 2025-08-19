@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 // Obtener las variables de entorno (solo las que empiezan con NEXT_PUBLIC_ están disponibles en el cliente)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -6,14 +6,16 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Validar que las variables estén configuradas
 if (!supabaseUrl) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL")
 }
 
 if (!supabaseAnonKey) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY")
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)
+
+export const createClient = () => createSupabaseClient(supabaseUrl, supabaseAnonKey)
 
 // Función para verificar si Supabase está configurado
 export const isSupabaseConfigured = () => {
@@ -242,6 +244,43 @@ export type Database = {
           comment?: string
           comment_type?: string
           is_internal?: boolean
+          updated_at?: string
+        }
+      }
+      employee_files: {
+        Row: {
+          id: string
+          employee_id: string
+          file_name: string
+          file_type: string
+          file_size: number
+          upload_date: string
+          uploaded_by: string | null
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          file_name: string
+          file_type: string
+          file_size: number
+          upload_date?: string
+          uploaded_by?: string | null
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          file_name?: string
+          file_type?: string
+          file_size?: number
+          upload_date?: string
+          uploaded_by?: string | null
+          description?: string | null
           updated_at?: string
         }
       }

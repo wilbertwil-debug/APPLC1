@@ -1,17 +1,19 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { AuthProvider } from '@/contexts/auth-context'
-import { PermissionsProvider } from '@/contexts/permissions-context'
-import { Toaster } from '@/components/ui/toaster'
-import { AuthDebug } from '@/components/auth-debug'
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { AuthProvider } from "@/contexts/auth-context"
+import { PermissionsProvider } from "@/contexts/permissions-context"
+import { Toaster } from "@/components/ui/toaster"
+import { AuthDebug } from "@/components/auth-debug"
+import { FloatingAIAssistant } from "@/components/floating-ai-assistant"
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'Sistema de Gestión de Inventario',
-  description: 'Sistema completo de gestión de inventario tecnológico',
-    generator: 'v0.dev'
+  title: "Sistema de Gestión de Inventario",
+  description: "Sistema completo de gestión de inventario tecnológico",
+    generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -27,6 +29,7 @@ export default function RootLayout({
             {children}
             <Toaster />
             <AuthDebug />
+            <FloatingAIAssistant />
           </PermissionsProvider>
         </AuthProvider>
       </body>

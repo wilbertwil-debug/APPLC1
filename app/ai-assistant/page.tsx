@@ -1,19 +1,21 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Navigation } from '@/components/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { useToast } from '@/hooks/use-toast'
-import { Bot, User, Send, Loader2, AlertTriangle, ExternalLink, Settings } from 'lucide-react'
-import { ProtectedRoute } from '@/components/protected-route'
+import type React from "react"
+
+import { useState } from "react"
+import { Navigation } from "@/components/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useToast } from "@/hooks/use-toast"
+import { Bot, User, Send, Loader2, AlertTriangle, ExternalLink, Settings } from "lucide-react"
+import { ProtectedRoute } from "@/components/protected-route"
 
 interface Message {
   id: string
-  role: 'user' | 'assistant'
+  role: "user" | "assistant"
   content: string
   timestamp: Date
   error?: string
@@ -22,13 +24,14 @@ interface Message {
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      role: 'assistant',
-      content: '¡Hola! Soy tu asistente de IA para equipos tecnológicos. Puedes preguntarme sobre características técnicas, especificaciones, compatibilidad, solución de problemas y más. ¿En qué puedo ayudarte hoy?',
+      id: "1",
+      role: "assistant",
+      content:
+        "¡Hola! Soy tu asistente de IA para equipos tecnológicos. Puedes preguntarme sobre características técnicas, especificaciones, compatibilidad, solución de problemas y más. ¿En qué puedo ayudarte hoy?",
       timestamp: new Date(),
     },
   ])
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [configError, setConfigError] = useState<string | null>(null)
   const { toast } = useToast()
@@ -39,84 +42,113 @@ export default function AIAssistantPage() {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content: input.trim(),
       timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
+    setMessages((prev) => [...prev, userMessage])
+    setInput("")
     setLoading(true)
     setConfigError(null)
 
     try {
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
+      const response = await fetch("/api/ai-chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: input.trim(),
-          context: 'equipment_technical_support',
+          context: "equipment_technical_support",
         }),
       })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Check if response is actually JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON")
+      }
 
       const data = await response.json()
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
+        role: "assistant",
+        content: data.response || "No se pudo obtener una respuesta.",
         timestamp: new Date(),
-        error: data.error
+        error: data.error,
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage])
 
       // Manejar errores específicos
       if (data.error) {
-        if (data.error === 'SERVICE_DISABLED') {
-          setConfigError('SERVICE_DISABLED')
-        } else if (data.error === 'API_KEY_MISSING') {
-          setConfigError('API_KEY_MISSING')
+        if (data.error === "SERVICE_DISABLED") {
+          setConfigError("SERVICE_DISABLED")
+        } else if (data.error === "API_KEY_MISSING") {
+          setConfigError("API_KEY_MISSING")
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error)
+
+      let errorMessage =
+        "Lo siento, hubo un error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente."
+
+      if (error instanceof Error) {
+        if (error.message.includes("JSON")) {
+          errorMessage = "Error de formato en la respuesta del servidor. Por favor, contacta al administrador."
+        } else if (error.message.includes("HTTP error")) {
+          errorMessage = "Error del servidor. Por favor, intenta nuevamente en unos minutos."
         }
       }
 
-    } catch (error) {
-      console.error('Error:', error)
       toast({
-        title: 'Error de conexión',
-        description: 'No se pudo conectar con el servidor',
-        variant: 'destructive',
+        title: "Error de conexión",
+        description: errorMessage,
+        variant: "destructive",
       })
 
-      const errorMessage: Message = {
+      const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Lo siento, hubo un error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.',
+        role: "assistant",
+        content: errorMessage,
         timestamp: new Date(),
-        error: 'CONNECTION_ERROR'
+        error: "CONNECTION_ERROR",
       }
 
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMsg])
     } finally {
       setLoading(false)
     }
   }
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }
 
   const suggestedQuestions = [
-    '¿Cuáles son las especificaciones de una laptop Dell Latitude 7420?',
+    "¿Cuántos tickets abiertos tenemos actualmente?",
+    "¿Qué equipos están en mantenimiento?",
+    "¿Cuáles son los tickets de alta prioridad?",
+    "¿Qué empleados están en el departamento de IT?",
+    "¿Cuál es el estado general del inventario?",
+    "Muéstrame los tickets asignados a Juan Pérez",
+    "¿Qué equipos están disponibles para asignar?",
+    "¿Cuántos empleados activos tenemos?",
+    "¿Cuáles son las especificaciones de una laptop Dell Latitude 7420?",
     '¿Qué características tiene un monitor LG UltraWide 34"?',
-    '¿Cómo solucionar problemas de conectividad en impresoras HP?',
-    '¿Qué diferencias hay entre procesadores Intel i5 e i7?',
-    '¿Cuáles son los requisitos para instalar Windows 11?',
+    "¿Cómo solucionar problemas de conectividad en impresoras HP?",
+    "¿Qué diferencias hay entre procesadores Intel i5 e i7?",
+    "¿Cuáles son los requisitos para instalar Windows 11?",
   ]
 
   const ConfigurationAlert = () => {
@@ -127,16 +159,16 @@ export default function AIAssistantPage() {
         <AlertTriangle className="h-4 w-4 text-orange-600" />
         <AlertTitle className="text-orange-800">Configuración requerida</AlertTitle>
         <AlertDescription className="text-orange-700 mt-2">
-          {configError === 'SERVICE_DISABLED' && (
+          {configError === "SERVICE_DISABLED" && (
             <div className="space-y-3">
               <p>La API de Google Generative Language no está habilitada.</p>
               <div className="space-y-2">
                 <p className="font-medium">Para solucionarlo:</p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   <li>
-                    <a 
-                      href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview" 
-                      target="_blank" 
+                    <a
+                      href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline inline-flex items-center gap-1"
                     >
@@ -150,16 +182,16 @@ export default function AIAssistantPage() {
               </div>
             </div>
           )}
-          {configError === 'API_KEY_MISSING' && (
+          {configError === "API_KEY_MISSING" && (
             <div className="space-y-3">
               <p>La clave de API de Google AI no está configurada.</p>
               <div className="space-y-2">
                 <p className="font-medium">Para solucionarlo:</p>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
                   <li>
-                    <a 
-                      href="https://makersuite.google.com/app/apikey" 
-                      target="_blank" 
+                    <a
+                      href="https://makersuite.google.com/app/apikey"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline inline-flex items-center gap-1"
                     >
@@ -189,7 +221,7 @@ export default function AIAssistantPage() {
                 <h1 className="text-3xl font-bold text-gray-900">Asistente de IA</h1>
                 <p className="text-gray-600">Consulta sobre equipos tecnológicos con inteligencia artificial</p>
               </div>
-              
+
               <ConfigurationAlert />
             </div>
 
@@ -219,25 +251,23 @@ export default function AIAssistantPage() {
                           {messages.map((message) => (
                             <div
                               key={message.id}
-                              className={`flex gap-3 ${
-                                message.role === 'user' ? 'justify-end' : 'justify-start'
-                              }`}
+                              className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                             >
                               <div
                                 className={`flex gap-3 max-w-[80%] ${
-                                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                                  message.role === "user" ? "flex-row-reverse" : "flex-row"
                                 }`}
                               >
                                 <div
                                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                    message.role === 'user'
-                                      ? 'bg-blue-600 text-white'
+                                    message.role === "user"
+                                      ? "bg-blue-600 text-white"
                                       : message.error
-                                      ? 'bg-orange-200 text-orange-600'
-                                      : 'bg-gray-200 text-gray-600'
+                                        ? "bg-orange-200 text-orange-600"
+                                        : "bg-gray-200 text-gray-600"
                                   }`}
                                 >
-                                  {message.role === 'user' ? (
+                                  {message.role === "user" ? (
                                     <User className="h-4 w-4" />
                                   ) : message.error ? (
                                     <AlertTriangle className="h-4 w-4" />
@@ -247,28 +277,26 @@ export default function AIAssistantPage() {
                                 </div>
                                 <div
                                   className={`rounded-lg px-4 py-2 ${
-                                    message.role === 'user'
-                                      ? 'bg-blue-600 text-white'
+                                    message.role === "user"
+                                      ? "bg-blue-600 text-white"
                                       : message.error
-                                      ? 'bg-orange-50 text-orange-900 border border-orange-200'
-                                      : 'bg-gray-100 text-gray-900'
+                                        ? "bg-orange-50 text-orange-900 border border-orange-200"
+                                        : "bg-gray-100 text-gray-900"
                                   }`}
                                 >
                                   <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                                   <p
                                     className={`text-xs mt-1 ${
-                                      message.role === 'user'
-                                        ? 'text-blue-100'
+                                      message.role === "user"
+                                        ? "text-blue-100"
                                         : message.error
-                                        ? 'text-orange-600'
-                                        : 'text-gray-500'
+                                          ? "text-orange-600"
+                                          : "text-gray-500"
                                     }`}
                                   >
                                     {formatTime(message.timestamp)}
                                     {message.error && (
-                                      <span className="ml-2 font-medium">
-                                        • Configuración requerida
-                                      </span>
+                                      <span className="ml-2 font-medium">• Configuración requerida</span>
                                     )}
                                   </p>
                                 </div>
@@ -312,9 +340,7 @@ export default function AIAssistantPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Preguntas Sugeridas</CardTitle>
-                      <CardDescription>
-                        Ejemplos de consultas que puedes hacer
-                      </CardDescription>
+                      <CardDescription>Ejemplos de consultas que puedes hacer</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
@@ -322,7 +348,7 @@ export default function AIAssistantPage() {
                           <Button
                             key={index}
                             variant="outline"
-                            className="w-full text-left h-auto p-3 text-sm"
+                            className="w-full text-left h-auto p-3 text-sm bg-transparent"
                             onClick={() => setInput(question)}
                             disabled={loading}
                           >
@@ -340,33 +366,39 @@ export default function AIAssistantPage() {
                     <CardContent>
                       <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${configError ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+                          <div
+                            className={`w-2 h-2 rounded-full ${configError ? "bg-orange-500" : "bg-green-500"}`}
+                          ></div>
                           <span className="font-medium">
-                            {configError ? 'Configuración requerida' : 'Servicio activo'}
+                            {configError ? "Configuración requerida" : "Servicio activo"}
                           </span>
                         </div>
-                        
+
                         {!configError && (
                           <div className="space-y-2 text-gray-600">
                             <div className="flex items-start gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                              <span>Especificaciones técnicas</span>
+                              <span>Consulta de tickets en tiempo real</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                              <span>Compatibilidad de dispositivos</span>
+                              <span>Información de empleados y asignaciones</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                              <span>Solución de problemas</span>
+                              <span>Estado del inventario de equipos</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                              <span>Recomendaciones de hardware</span>
+                              <span>Estadísticas y reportes del sistema</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                              <span>Búsquedas específicas en la base de datos</span>
                             </div>
                           </div>
                         )}
-                        
+
                         {configError && (
                           <div className="text-orange-600 text-xs">
                             <p>El asistente necesita configuración adicional para funcionar.</p>
