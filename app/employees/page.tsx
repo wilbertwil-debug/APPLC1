@@ -24,6 +24,7 @@ import { Plus, Search, Edit, Trash2, Mail, Phone, Building, User, FileText, Prin
 import { ProtectedRoute } from "@/components/protected-route"
 import { EmployeeFilesDialog } from "@/components/employee-files-dialog"
 import { SignaturePad } from "@/components/signature-pad"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Employee {
   id: string
@@ -33,6 +34,7 @@ interface Employee {
   position: string
   department: string
   status: string
+  user_type?: string
   signature?: string
   email_policy_usage?: boolean
   technology_usage?: boolean
@@ -68,6 +70,7 @@ export default function EmployeesPage() {
     position: "",
     department: "",
     status: "active",
+    user_type: "user",
     signature: "",
     email_policy_usage: false,
     technology_usage: false,
@@ -152,6 +155,7 @@ export default function EmployeesPage() {
       position: "",
       department: "",
       status: "active",
+      user_type: "user",
       signature: "",
       email_policy_usage: false,
       technology_usage: false,
@@ -167,6 +171,7 @@ export default function EmployeesPage() {
       position: employee.position || "",
       department: employee.department || "",
       status: employee.status || "active",
+      user_type: employee.user_type || "user",
       signature: employee.signature || "",
       email_policy_usage: employee.email_policy_usage || false,
       technology_usage: employee.technology_usage || false,
@@ -513,6 +518,22 @@ export default function EmployeesPage() {
                           onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="user_type">Tipo de Usuario</Label>
+                        <Select
+                          value={formData.user_type}
+                          onValueChange={(value) => setFormData({ ...formData, user_type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar tipo de usuario" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                            <SelectItem value="manager">Gerente</SelectItem>
+                            <SelectItem value="user">Usuario</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -622,12 +643,43 @@ export default function EmployeesPage() {
                           <span>{employee.position}</span>
                         </div>
                       )}
+                      {employee.user_type && (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span>
+                            Tipo:{" "}
+                            {employee.user_type === "admin"
+                              ? "Administrador"
+                              : employee.user_type === "manager"
+                                ? "Gerente"
+                                : "Usuario"}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <span>Estado:</span>
                         <span>{employee.status}</span>
                       </div>
 
                       <div className="flex gap-2 mt-2">
+                        {employee.user_type && (
+                          <Badge
+                            variant={
+                              employee.user_type === "admin"
+                                ? "default"
+                                : employee.user_type === "manager"
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                            className="text-xs"
+                          >
+                            {employee.user_type === "admin"
+                              ? "Admin"
+                              : employee.user_type === "manager"
+                                ? "Manager"
+                                : "User"}
+                          </Badge>
+                        )}
                         {employee.email_policy_usage && (
                           <Badge variant="secondary" className="text-xs">
                             <Mail className="w-3 h-3 mr-1" />
