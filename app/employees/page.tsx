@@ -460,71 +460,96 @@ export default function EmployeesPage() {
                     Nuevo Empleado
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-y-auto mx-auto">
                   <DialogHeader>
-                    <DialogTitle>{editingEmployee ? "Editar Empleado" : "Nuevo Empleado"}</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-lg md:text-xl">
+                      {editingEmployee ? "Editar Empleado" : "Nuevo Empleado"}
+                    </DialogTitle>
+                    <DialogDescription className="text-sm md:text-base">
                       {editingEmployee ? "Modifica los datos del empleado" : "Agrega un nuevo empleado al sistema"}
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Nombre *</Label>
+                        <Label htmlFor="name" className="text-sm font-medium">
+                          Nombre *
+                        </Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
+                          className="h-10 md:h-11 text-base"
+                          placeholder="Ingresa el nombre completo"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email *</Label>
+                        <Label htmlFor="email" className="text-sm font-medium">
+                          Email *
+                        </Label>
                         <Input
                           id="email"
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           required
+                          className="h-10 md:h-11 text-base"
+                          placeholder="ejemplo@empresa.com"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Teléfono</Label>
+                        <Label htmlFor="phone" className="text-sm font-medium">
+                          Teléfono
+                        </Label>
                         <Input
                           id="phone"
+                          type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="h-10 md:h-11 text-base"
+                          placeholder="(555) 123-4567"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="department">Departamento</Label>
+                        <Label htmlFor="department" className="text-sm font-medium">
+                          Departamento
+                        </Label>
                         <Input
                           id="department"
                           value={formData.department}
                           onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          className="h-10 md:h-11 text-base"
+                          placeholder="Ej: Recursos Humanos"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="position">Posición</Label>
+                        <Label htmlFor="position" className="text-sm font-medium">
+                          Posición
+                        </Label>
                         <Input
                           id="position"
                           value={formData.position}
                           onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                          className="h-10 md:h-11 text-base"
+                          placeholder="Ej: Gerente de Ventas"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="user_type">Tipo de Usuario</Label>
+                        <Label htmlFor="user_type" className="text-sm font-medium">
+                          Tipo de Usuario
+                        </Label>
                         <Select
                           value={formData.user_type}
                           onValueChange={(value) => setFormData({ ...formData, user_type: value })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="h-10 md:h-11 text-base">
                             <SelectValue placeholder="Seleccionar tipo de usuario" />
                           </SelectTrigger>
                           <SelectContent>
@@ -536,55 +561,80 @@ export default function EmployeesPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="status">Estado</Label>
-                        <Input
-                          id="status"
+                        <Label htmlFor="status" className="text-sm font-medium">
+                          Estado
+                        </Label>
+                        <Select
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          onValueChange={(value) => setFormData({ ...formData, status: value })}
+                        >
+                          <SelectTrigger className="h-10 md:h-11 text-base">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Activo</SelectItem>
+                            <SelectItem value="inactive">Inactivo</SelectItem>
+                            <SelectItem value="suspended">Suspendido</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium">Políticas y Permisos</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-center space-x-3 p-2 bg-white rounded border">
+                          <Checkbox
+                            id="email_policy_usage"
+                            checked={formData.email_policy_usage}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, email_policy_usage: checked as boolean })
+                            }
+                            className="h-5 w-5"
+                          />
+                          <Label htmlFor="email_policy_usage" className="text-sm cursor-pointer flex-1">
+                            Política de Correo Electrónico
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-3 p-2 bg-white rounded border">
+                          <Checkbox
+                            id="technology_usage"
+                            checked={formData.technology_usage}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, technology_usage: checked as boolean })
+                            }
+                            className="h-5 w-5"
+                          />
+                          <Label htmlFor="technology_usage" className="text-sm cursor-pointer flex-1">
+                            Uso de Tecnología
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium">Firma Digital</Label>
+                      <div className="bg-white rounded-lg p-2">
+                        <SignaturePad
+                          initialSignature={formData.signature}
+                          onSignatureChange={(signature) => setFormData({ ...formData, signature })}
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <Label>Políticas y Permisos</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="email_policy_usage"
-                          checked={formData.email_policy_usage}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, email_policy_usage: checked as boolean })
-                          }
-                        />
-                        <Label htmlFor="email_policy_usage">Política de Correo</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="technology_usage"
-                          checked={formData.technology_usage}
-                          onCheckedChange={(checked) =>
-                            setFormData({ ...formData, technology_usage: checked as boolean })
-                          }
-                        />
-                        <Label htmlFor="technology_usage">Uso de Tecnología</Label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Firma Digital</Label>
-                      <SignaturePad
-                        initialSignature={formData.signature}
-                        onSignatureChange={(signature) => setFormData({ ...formData, signature })}
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
+                        className="h-11 px-6 text-base order-2 sm:order-1"
+                      >
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={loading}>
-                        {loading ? "Guardando..." : editingEmployee ? "Actualizar" : "Crear"}
+                      <Button type="submit" disabled={loading} className="h-11 px-6 text-base order-1 sm:order-2">
+                        {loading ? "Guardando..." : editingEmployee ? "Actualizar Empleado" : "Crear Empleado"}
                       </Button>
                     </div>
                   </form>
@@ -604,64 +654,47 @@ export default function EmployeesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
               {filteredEmployees.map((employee) => (
-                <Card key={employee.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{employee.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          <Mail className="h-4 w-4" />
-                          {employee.email}
+                <Card key={employee.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base md:text-lg truncate">{employee.name}</CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm">
+                          <Mail className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                          <span className="truncate">{employee.email}</span>
                         </CardDescription>
                       </div>
                       {employee.signature && (
-                        <Badge variant="outline" className="text-green-600">
+                        <Badge variant="outline" className="text-green-600 text-xs flex-shrink-0">
                           Firmado
                         </Badge>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
+                  <CardContent className="pt-0">
+                    <div className="space-y-2 text-xs md:text-sm">
                       {employee.phone && (
                         <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span>{employee.phone}</span>
+                          <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{employee.phone}</span>
                         </div>
                       )}
                       {employee.department && (
                         <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-gray-400" />
-                          <span>{employee.department}</span>
+                          <Building className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{employee.department}</span>
                         </div>
                       )}
                       {employee.position && (
                         <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <span>{employee.position}</span>
+                          <User className="h-3 w-3 md:h-4 md:w-4 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{employee.position}</span>
                         </div>
                       )}
-                      {employee.user_type && (
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <span>
-                            Tipo:{" "}
-                            {employee.user_type === "admin"
-                              ? "Administrador"
-                              : employee.user_type === "manager"
-                                ? "Gerente"
-                                : "Usuario"}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span>Estado:</span>
-                        <span>{employee.status}</span>
-                      </div>
 
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-3">
                         {employee.user_type && (
                           <Badge
                             variant={
@@ -671,7 +704,7 @@ export default function EmployeesPage() {
                                   ? "secondary"
                                   : "outline"
                             }
-                            className="text-xs"
+                            className="text-xs px-2 py-1"
                           >
                             {employee.user_type === "admin"
                               ? "Admin"
@@ -681,13 +714,13 @@ export default function EmployeesPage() {
                           </Badge>
                         )}
                         {employee.email_policy_usage && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs px-2 py-1">
                             <Mail className="w-3 h-3 mr-1" />
                             Email
                           </Badge>
                         )}
                         {employee.technology_usage && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs px-2 py-1">
                             <Monitor className="w-3 h-3 mr-1" />
                             Tech
                           </Badge>
@@ -695,17 +728,29 @@ export default function EmployeesPage() {
                       </div>
                     </div>
 
-                    <div className="flex justify-between mt-4">
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(employee)}>
-                          <Edit className="h-4 w-4" />
+                    <div className="flex flex-col sm:flex-row justify-between gap-2 mt-4 pt-3 border-t">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(employee)}
+                          className="flex-1 sm:flex-none h-9"
+                        >
+                          <Edit className="h-4 w-4 mr-1 sm:mr-0" />
+                          <span className="sm:hidden">Editar</span>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(employee.id)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(employee.id)}
+                          className="flex-1 sm:flex-none h-9"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1 sm:mr-0" />
+                          <span className="sm:hidden">Eliminar</span>
                         </Button>
                       </div>
 
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -714,16 +759,20 @@ export default function EmployeesPage() {
                             setFilesDialogOpen(true)
                           }}
                           title="Gestionar expediente"
+                          className="flex-1 sm:flex-none h-9"
                         >
-                          <FileText className="h-4 w-4" />
+                          <FileText className="h-4 w-4 mr-1 sm:mr-0" />
+                          <span className="sm:hidden">Expediente</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handlePrintReport(employee)}
                           title="Imprimir reporte"
+                          className="flex-1 sm:flex-none h-9"
                         >
-                          <Printer className="h-4 w-4" />
+                          <Printer className="h-4 w-4 mr-1 sm:mr-0" />
+                          <span className="sm:hidden">Imprimir</span>
                         </Button>
                       </div>
                     </div>
