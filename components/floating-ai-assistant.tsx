@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MessageCircle, X, Send, Bot, Users } from "lucide-react"
@@ -52,8 +51,8 @@ export function FloatingAIAssistant() {
 
   const { user } = useAuth()
 
-  const aiMessagesEndRef = useRef<HTMLDivElement>(null)
-  const chatMessagesEndRef = useRef<HTMLDivElement>(null)
+  const aiScrollRef = useRef<HTMLDivElement>(null)
+  const chatScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user?.email) {
@@ -69,14 +68,14 @@ export function FloatingAIAssistant() {
   }, [selectedContact, currentEmployee])
 
   useEffect(() => {
-    if (aiMessagesEndRef.current) {
-      aiMessagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    if (aiScrollRef.current) {
+      aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight
     }
   }, [messages, isLoading])
 
   useEffect(() => {
-    if (chatMessagesEndRef.current) {
-      chatMessagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
     }
   }, [chatMessages])
 
@@ -137,7 +136,7 @@ export function FloatingAIAssistant() {
         console.error("Error loading messages:", data.error)
         if (data.error.includes("table") || data.error.includes("relation")) {
           alert(
-            "❌ Error: La tabla internal_chat_messages no existe.\n\n📋 Solución:\n1. Ve a Supabase Dashboard\n2. Abre SQL Editor\n3. Ejecuta el script: scripts/13-create-internal-chat-table.sql",
+            "❌ Error: La tabla internal_chat_messages no existe.\\n\\n📋 Solución:\\n1. Ve a Supabase Dashboard\\n2. Abre SQL Editor\\n3. Ejecuta el script: scripts/13-create-internal-chat-table.sql",
           )
         } else {
           alert(`❌ Error cargando mensajes: ${data.error}`)
@@ -186,7 +185,7 @@ export function FloatingAIAssistant() {
 
       if (error instanceof Error && error.message === "SUPABASE_NOT_CONFIGURED") {
         errorMessage =
-          "❌ Error de configuración: Las variables de entorno de Supabase no están configuradas.\n\n📋 Solución:\n1. Ve a Project Settings en v0\n2. Agrega las variables NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY\n3. O configura la integración de Supabase"
+          "❌ Error de configuración: Las variables de entorno de Supabase no están configuradas.\\n\\n📋 Solución:\\n1. Ve a Project Settings en v0\\n2. Agrega las variables NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY\\n3. O configura la integración de Supabase"
       }
 
       setMessages((prev) => [
@@ -257,11 +256,11 @@ export function FloatingAIAssistant() {
 
         if (data.error.includes("table") || data.error.includes("relation")) {
           alert(
-            "❌ Error: La tabla de chat interno no existe.\n\n📋 Solución:\n1. Ve a Supabase Dashboard\n2. Abre SQL Editor\n3. Ejecuta el script: scripts/13-create-internal-chat-table.sql",
+            "❌ Error: La tabla de chat interno no existe.\\n\\n📋 Solución:\\n1. Ve a Supabase Dashboard\\n2. Abre SQL Editor\\n3. Ejecuta el script: scripts/13-create-internal-chat-table.sql",
           )
         } else if (data.error.includes("not found")) {
           alert(
-            "❌ Error: Tu usuario no está registrado como empleado.\n\n📋 Solución:\n1. Ve a la página de Empleados\n2. Agrega tu email como empleado",
+            "❌ Error: Tu usuario no está registrado como empleado.\\n\\n📋 Solución:\\n1. Ve a la página de Empleados\\n2. Agrega tu email como empleado",
           )
         } else {
           alert(`❌ Error enviando mensaje: ${data.error}`)
@@ -336,53 +335,52 @@ export function FloatingAIAssistant() {
 
               {/* AI Assistant Tab */}
               <TabsContent value="ai" className="flex flex-col flex-1 mt-2">
-                <div className="flex-1 relative">
-                  <ScrollArea className="absolute inset-0">
-                    <div className="p-3">
-                      {messages.length === 0 ? (
-                        <div className="text-center text-muted-foreground text-sm py-8">
-                          <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>¡Hola! Soy tu asistente IA.</p>
-                          <p>¿En qué puedo ayudarte hoy?</p>
+                <div
+                  ref={aiScrollRef}
+                  className="flex-1 overflow-y-auto px-3 py-2 space-y-3"
+                  style={{ scrollBehavior: "smooth" }}
+                >
+                  {messages.length === 0 ? (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>¡Hola! Soy tu asistente IA.</p>
+                      <p>¿En qué puedo ayudarte hoy?</p>
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((message, index) => (
+                        <div
+                          key={index}
+                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+                              message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                            }`}
+                          >
+                            {message.content}
+                          </div>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {messages.map((message, index) => (
-                            <div
-                              key={index}
-                              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                            >
+                      ))}
+                      {isLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-muted rounded-lg px-3 py-2 text-sm">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
                               <div
-                                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                                  message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                                }`}
-                              >
-                                {message.content}
-                              </div>
+                                className="w-2 h-2 bg-current rounded-full animate-bounce"
+                                style={{ animationDelay: "0.1s" }}
+                              ></div>
+                              <div
+                                className="w-2 h-2 bg-current rounded-full animate-bounce"
+                                style={{ animationDelay: "0.2s" }}
+                              ></div>
                             </div>
-                          ))}
-                          {isLoading && (
-                            <div className="flex justify-start">
-                              <div className="bg-muted rounded-lg px-3 py-2 text-sm">
-                                <div className="flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
-                                  <div
-                                    className="w-2 h-2 bg-current rounded-full animate-bounce"
-                                    style={{ animationDelay: "0.1s" }}
-                                  ></div>
-                                  <div
-                                    className="w-2 h-2 bg-current rounded-full animate-bounce"
-                                    style={{ animationDelay: "0.2s" }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div ref={aiMessagesEndRef} />
+                          </div>
                         </div>
                       )}
-                    </div>
-                  </ScrollArea>
+                    </>
+                  )}
                 </div>
                 <form onSubmit={handleSubmit} className="p-3 border-t">
                   <div className="flex gap-2">
@@ -417,50 +415,49 @@ export function FloatingAIAssistant() {
                   </Select>
                 </div>
 
-                <div className="flex-1 relative">
-                  <ScrollArea className="absolute inset-0">
-                    <div className="p-3">
-                      {!selectedContact ? (
-                        <div className="text-center text-muted-foreground text-sm py-8">
-                          <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>Selecciona un contacto</p>
-                          <p>para comenzar a chatear</p>
-                        </div>
-                      ) : chatMessages.length === 0 ? (
-                        <div className="text-center text-muted-foreground text-sm py-8">
-                          <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>No hay mensajes con</p>
-                          <p>{selectedContactName}</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {chatMessages.map((message) => (
-                            <div
-                              key={message.id}
-                              className={`flex ${message.sender_id === currentEmployee?.id ? "justify-end" : "justify-start"}`}
-                            >
-                              <div
-                                className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                                  message.sender_id === currentEmployee?.id
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
-                              >
-                                <div className="font-medium text-xs mb-1">
-                                  {message.sender_id === currentEmployee?.id ? "Tú" : message.sender.name}
-                                </div>
-                                {message.message}
-                                <div className="text-xs opacity-70 mt-1">
-                                  {new Date(message.created_at).toLocaleTimeString()}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          <div ref={chatMessagesEndRef} />
-                        </div>
-                      )}
+                <div
+                  ref={chatScrollRef}
+                  className="flex-1 overflow-y-auto px-3 py-2 space-y-3"
+                  style={{ scrollBehavior: "smooth" }}
+                >
+                  {!selectedContact ? (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>Selecciona un contacto</p>
+                      <p>para comenzar a chatear</p>
                     </div>
-                  </ScrollArea>
+                  ) : chatMessages.length === 0 ? (
+                    <div className="text-center text-muted-foreground text-sm py-8">
+                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No hay mensajes con</p>
+                      <p>{selectedContactName}</p>
+                    </div>
+                  ) : (
+                    <>
+                      {chatMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.sender_id === currentEmployee?.id ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                              message.sender_id === currentEmployee?.id
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
+                          >
+                            <div className="font-medium text-xs mb-1">
+                              {message.sender_id === currentEmployee?.id ? "Tú" : message.sender.name}
+                            </div>
+                            {message.message}
+                            <div className="text-xs opacity-70 mt-1">
+                              {new Date(message.created_at).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
 
                 {selectedContact && (
