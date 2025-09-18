@@ -6,7 +6,6 @@ import { AuthProvider } from "@/contexts/auth-context"
 import { PermissionsProvider } from "@/contexts/permissions-context"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthDebug } from "@/components/auth-debug"
-import { FloatingAIAssistant } from "@/components/floating-ai-assistant"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,7 +28,6 @@ export default function RootLayout({
             {children}
             <Toaster />
             <AuthDebug />
-            <FloatingAIAssistant />
           </PermissionsProvider>
         </AuthProvider>
       </body>
