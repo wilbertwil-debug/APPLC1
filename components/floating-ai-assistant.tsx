@@ -52,8 +52,8 @@ export function FloatingAIAssistant() {
 
   const { user } = useAuth()
 
-  const aiScrollRef = useRef<HTMLDivElement>(null)
-  const chatScrollRef = useRef<HTMLDivElement>(null)
+  const aiMessagesEndRef = useRef<HTMLDivElement>(null)
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (user?.email) {
@@ -69,20 +69,14 @@ export function FloatingAIAssistant() {
   }, [selectedContact, currentEmployee])
 
   useEffect(() => {
-    if (aiScrollRef.current) {
-      const viewport = aiScrollRef.current.querySelector("[data-radix-scroll-area-viewport]")
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
-      }
+    if (aiMessagesEndRef.current) {
+      aiMessagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages, isLoading])
 
   useEffect(() => {
-    if (chatScrollRef.current) {
-      const viewport = chatScrollRef.current.querySelector("[data-radix-scroll-area-viewport]")
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight
-      }
+    if (chatMessagesEndRef.current) {
+      chatMessagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
   }, [chatMessages])
 
@@ -343,7 +337,7 @@ export function FloatingAIAssistant() {
               {/* AI Assistant Tab */}
               <TabsContent value="ai" className="flex flex-col flex-1 mt-2">
                 <div className="flex-1 relative">
-                  <ScrollArea className="absolute inset-0" ref={aiScrollRef}>
+                  <ScrollArea className="absolute inset-0">
                     <div className="p-3">
                       {messages.length === 0 ? (
                         <div className="text-center text-muted-foreground text-sm py-8">
@@ -384,6 +378,7 @@ export function FloatingAIAssistant() {
                               </div>
                             </div>
                           )}
+                          <div ref={aiMessagesEndRef} />
                         </div>
                       )}
                     </div>
@@ -423,7 +418,7 @@ export function FloatingAIAssistant() {
                 </div>
 
                 <div className="flex-1 relative">
-                  <ScrollArea className="absolute inset-0" ref={chatScrollRef}>
+                  <ScrollArea className="absolute inset-0">
                     <div className="p-3">
                       {!selectedContact ? (
                         <div className="text-center text-muted-foreground text-sm py-8">
@@ -461,6 +456,7 @@ export function FloatingAIAssistant() {
                               </div>
                             </div>
                           ))}
+                          <div ref={chatMessagesEndRef} />
                         </div>
                       )}
                     </div>
