@@ -8,14 +8,15 @@ interface AITool {
 
 const availableTools: AITool[] = [
   {
-    name: "get_tickets",
-    description: "Obtener información de tickets del sistema. Puede filtrar por estado, prioridad, asignado, etc.",
+    name: "get_products",
+    description:
+      "Obtener información de productos del inventario. Puede filtrar por categoría, proveedor, stock bajo, etc.",
     parameters: {
       type: "object",
       properties: {
-        status: { type: "string", enum: ["open", "in_progress", "resolved", "closed"] },
-        priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
-        assigned_to: { type: "string" },
+        category: { type: "string" },
+        supplier: { type: "string" },
+        low_stock: { type: "boolean" },
         limit: { type: "number", maximum: 50 },
       },
     },
@@ -26,38 +27,46 @@ const availableTools: AITool[] = [
     parameters: {
       type: "object",
       properties: {
-        department: { type: "string" },
+        user_type: { type: "string", enum: ["admin", "manager", "user"] },
         active: { type: "boolean" },
         limit: { type: "number", maximum: 50 },
       },
     },
   },
   {
-    name: "get_equipment",
-    description: "Obtener información de equipos del sistema",
+    name: "get_suppliers",
+    description: "Obtener información de proveedores del sistema",
     parameters: {
       type: "object",
       properties: {
-        status: { type: "string", enum: ["available", "assigned", "maintenance", "retired"] },
-        type: { type: "string" },
-        assigned_to: { type: "string" },
+        active: { type: "boolean" },
+        limit: { type: "number", maximum: 50 },
+      },
+    },
+  },
+  {
+    name: "get_categories",
+    description: "Obtener información de categorías de productos",
+    parameters: {
+      type: "object",
+      properties: {
         limit: { type: "number", maximum: 50 },
       },
     },
   },
   {
     name: "get_system_stats",
-    description: "Obtener estadísticas generales del sistema (resumen de tickets, empleados, equipos)",
+    description: "Obtener estadísticas generales del sistema (resumen de productos, empleados, proveedores)",
     parameters: { type: "object", properties: {} },
   },
   {
     name: "search_information",
-    description: "Buscar información específica en tickets, empleados o equipos",
+    description: "Buscar información específica en productos, empleados, proveedores o categorías",
     parameters: {
       type: "object",
       properties: {
         query: { type: "string" },
-        type: { type: "string", enum: ["tickets", "employees", "equipment"] },
+        type: { type: "string", enum: ["products", "employees", "suppliers", "categories"] },
       },
       required: ["query"],
     },
@@ -101,19 +110,20 @@ Una vez configurado, podré consultar tu base de datos en tiempo real.`,
 
     const hasSupabaseConfig = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    const systemPrompt = `Eres un asistente especializado en sistemas de gestión de inventario y equipos tecnológicos.
+    const systemPrompt = `Eres un asistente especializado en sistemas de gestión de inventario y control de stock.
 
 ${
   hasSupabaseConfig
     ? `**CAPACIDADES ACTIVAS:**
 - Consultas en tiempo real a la base de datos
-- Información actualizada de tickets, empleados y equipos
-- Estadísticas del sistema en vivo`
+- Información actualizada de productos, empleados, proveedores y categorías
+- Estadísticas del inventario en vivo
+- Alertas de stock bajo`
     : `**MODO CONSULTOR:**
 - Consejos sobre gestión de inventario
-- Mejores prácticas para tickets y equipos
+- Mejores prácticas para control de stock
 - Recomendaciones de procesos
-- Ayuda general con sistemas de gestión
+- Ayuda general con sistemas de inventario
 
 **NOTA:** Para consultas de datos específicos, necesitas configurar la integración con Supabase.`
 }
@@ -131,20 +141,19 @@ Pregunta del usuario: ${message}`
 
     if (hasSupabaseConfig) {
       const needsDatabase =
-        /\b(ticket|empleado|equipo|estado|asignado|inventario|estadística|cuántos|qué|quién|dónde|mostrar|buscar|información)\b/i.test(
+        /\b(producto|empleado|proveedor|categoría|stock|inventario|estadística|cuántos|qué|quién|dónde|mostrar|buscar|información)\b/i.test(
           message,
         )
 
       if (needsDatabase) {
         try {
-          const { getTickets, getEmployees, getEquipment, getSystemStats, searchInformation } = await import(
-            "@/lib/ai-database-tools"
-          )
+          const { getProducts, getEmployees, getSuppliers, getCategories, getSystemStats, searchInformation } =
+            await import("@/lib/ai-database-tools")
 
-          if (/ticket/i.test(message)) {
-            const result = await getTickets({ limit: 10 })
+          if (/producto|stock|inventario/i.test(message)) {
+            const result = await getProducts({ limit: 10 })
             if (result.success) {
-              databaseInfo += `\n\nINFORMACIÓN DE TICKETS RECIENTES:\n${JSON.stringify(result.data, null, 2)}`
+              databaseInfo += `\n\nINFORMACIÓN DE PRODUCTOS RECIENTES:\n${JSON.stringify(result.data, null, 2)}`
             }
           }
 
@@ -155,10 +164,17 @@ Pregunta del usuario: ${message}`
             }
           }
 
-          if (/equipo|inventario/i.test(message)) {
-            const result = await getEquipment({ limit: 10 })
+          if (/proveedor/i.test(message)) {
+            const result = await getSuppliers({ active: true, limit: 10 })
             if (result.success) {
-              databaseInfo += `\n\nINFORMACIÓN DE EQUIPOS:\n${JSON.stringify(result.data, null, 2)}`
+              databaseInfo += `\n\nINFORMACIÓN DE PROVEEDORES:\n${JSON.stringify(result.data, null, 2)}`
+            }
+          }
+
+          if (/categoría/i.test(message)) {
+            const result = await getCategories({ limit: 10 })
+            if (result.success) {
+              databaseInfo += `\n\nINFORMACIÓN DE CATEGORÍAS:\n${JSON.stringify(result.data, null, 2)}`
             }
           }
 
@@ -175,7 +191,7 @@ Pregunta del usuario: ${message}`
       }
     } else {
       if (
-        /\b(ticket|empleado|equipo|estado|asignado|inventario|estadística|cuántos|qué|quién|dónde|mostrar|buscar|información)\b/i.test(
+        /\b(producto|empleado|proveedor|categoría|stock|inventario|estadística|cuántos|qué|quién|dónde|mostrar|buscar|información)\b/i.test(
           message,
         )
       ) {

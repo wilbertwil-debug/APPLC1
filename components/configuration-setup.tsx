@@ -3,18 +3,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle, CheckCircle, Database, Brain, Shield, ExternalLink, Copy } from "lucide-react"
-import { useState } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { AlertTriangle, CheckCircle, Database, Brain, Shield, ExternalLink, FileText } from "lucide-react"
 
 interface ConfigurationSetupProps {
   missingVars: string[]
 }
 
 export function ConfigurationSetup({ missingVars }: ConfigurationSetupProps) {
-  const [copiedEnv, setCopiedEnv] = useState(false)
-  const { toast } = useToast()
-
   const envVars = [
     {
       name: "NEXT_PUBLIC_SUPABASE_URL",
@@ -22,7 +17,6 @@ export function ConfigurationSetup({ missingVars }: ConfigurationSetupProps) {
       required: true,
       icon: Database,
       present: !missingVars.includes("NEXT_PUBLIC_SUPABASE_URL"),
-      example: "https://[tu-proyecto-id].supabase.co",
     },
     {
       name: "NEXT_PUBLIC_SUPABASE_ANON_KEY",
@@ -30,7 +24,6 @@ export function ConfigurationSetup({ missingVars }: ConfigurationSetupProps) {
       required: true,
       icon: Shield,
       present: !missingVars.includes("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.[tu-clave-aqui]",
     },
     {
       name: "GOOGLE_AI_API_KEY",
@@ -38,29 +31,10 @@ export function ConfigurationSetup({ missingVars }: ConfigurationSetupProps) {
       required: false,
       icon: Brain,
       present: !missingVars.includes("GOOGLE_AI_API_KEY"),
-      example: "AIzaSy[tu-clave-google-ai-aqui]",
     },
   ]
 
   const requiredMissing = envVars.filter((v) => v.required && !v.present).length > 0
-
-  const copyEnvTemplate = () => {
-    const template = `# Configuración de Supabase (Requerido)
-NEXT_PUBLIC_SUPABASE_URL=https://[tu-proyecto-id].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[tu-clave-anonima-de-supabase]
-
-# Configuración de Google AI (Opcional)
-GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`
-
-    navigator.clipboard.writeText(template).then(() => {
-      setCopiedEnv(true)
-      toast({
-        title: "Copiado",
-        description: "Template de .env.local copiado al portapapeles",
-      })
-      setTimeout(() => setCopiedEnv(false), 2000)
-    })
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -114,27 +88,22 @@ GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`
               })}
             </div>
 
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Template .env.local</h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyEnvTemplate}
-                  className="flex items-center gap-2 bg-transparent"
-                >
-                  <Copy className="h-4 w-4" />
-                  {copiedEnv ? "Copiado!" : "Copiar"}
-                </Button>
+            <div className="bg-blue-50 p-4 rounded-lg mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <h4 className="font-medium text-blue-800">Archivo .env.local</h4>
               </div>
-              <pre className="text-xs bg-white p-3 rounded border overflow-x-auto">
-                {`# Configuración de Supabase (Requerido)
-NEXT_PUBLIC_SUPABASE_URL=https://[tu-proyecto-id].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=[tu-clave-anonima-de-supabase]
-
-# Configuración de Google AI (Opcional)
-GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`}
-              </pre>
+              <p className="text-sm text-blue-700 mb-3">
+                Crea un archivo llamado <code className="bg-blue-100 px-1 rounded">.env.local</code> en la raíz de tu
+                proyecto con las variables de entorno necesarias.
+              </p>
+              <div className="bg-blue-100 p-3 rounded text-xs text-blue-800">
+                <p className="font-medium mb-1">Formato:</p>
+                <p>VARIABLE_NAME=tu_valor_aqui</p>
+                <p className="mt-2 text-blue-600">
+                  Obtén los valores desde los dashboards correspondientes (Supabase, Google AI Studio)
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -170,7 +139,15 @@ GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`}
                 </div>
 
                 <div className="space-y-2">
-                  <p className="font-medium">3. Configurar base de datos</p>
+                  <p className="font-medium">3. Agregar a .env.local</p>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+                    <li>Agrega la URL del proyecto</li>
+                    <li>Agrega la clave anónima</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-medium">4. Configurar base de datos</p>
                   <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
                     <li>Ve al editor SQL de Supabase</li>
                     <li>Ejecuta el script de creación de tablas</li>
@@ -202,7 +179,7 @@ GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`}
 
                 <div className="space-y-2">
                   <p className="font-medium">2. Agregar a .env.local</p>
-                  <p className="text-gray-600">Copia la clave y agrégala como GOOGLE_AI_API_KEY</p>
+                  <p className="text-gray-600">Copia la clave y agrégala al archivo de configuración</p>
                 </div>
 
                 <div className="bg-blue-50 p-3 rounded text-xs">
@@ -239,7 +216,7 @@ GOOGLE_AI_API_KEY=[tu-clave-de-google-ai]`}
                 </div>
                 <div>
                   <p className="font-medium">Agregar variables de entorno</p>
-                  <p className="text-gray-600">Copia el template de arriba y reemplaza con tus valores reales</p>
+                  <p className="text-gray-600">Agrega las credenciales obtenidas de los servicios correspondientes</p>
                 </div>
               </div>
 

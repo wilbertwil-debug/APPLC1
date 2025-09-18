@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -52,6 +52,9 @@ export function FloatingAIAssistant() {
 
   const { user } = useAuth()
 
+  const aiScrollRef = useRef<HTMLDivElement>(null)
+  const chatScrollRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (user?.email) {
       loadEmployees()
@@ -64,6 +67,18 @@ export function FloatingAIAssistant() {
       loadChatMessages()
     }
   }, [selectedContact, currentEmployee])
+
+  useEffect(() => {
+    if (aiScrollRef.current) {
+      aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [chatMessages])
 
   const loadEmployees = async () => {
     try {
@@ -310,7 +325,7 @@ export function FloatingAIAssistant() {
 
               {/* AI Assistant Tab */}
               <TabsContent value="ai" className="flex flex-col flex-1 mt-2">
-                <ScrollArea className="flex-1 p-3">
+                <ScrollArea className="flex-1 p-3" ref={aiScrollRef}>
                   {messages.length === 0 ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
                       <Bot className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -386,7 +401,7 @@ export function FloatingAIAssistant() {
                   </Select>
                 </div>
 
-                <ScrollArea className="flex-1 p-3">
+                <ScrollArea className="flex-1 p-3" ref={chatScrollRef}>
                   {!selectedContact ? (
                     <div className="text-center text-muted-foreground text-sm py-8">
                       <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />

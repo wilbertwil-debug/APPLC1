@@ -8,31 +8,30 @@ export interface DatabaseQueryResult {
   error?: string
 }
 
-// Consultar tickets
-export async function getTickets(filters?: {
-  status?: string
-  priority?: string
-  assigned_to?: string
+export async function getProducts(filters?: {
+  category?: string
+  supplier?: string
+  low_stock?: boolean
   limit?: number
 }): Promise<DatabaseQueryResult> {
   try {
     let query = supabase
-      .from("tickets")
+      .from("products")
       .select(`
         *,
-        assigned_employee:employees(name, email, department),
-        created_by_employee:employees!tickets_created_by_fkey(name, email)
+        categories(name),
+        suppliers(name, contact_person)
       `)
       .order("created_at", { ascending: false })
 
-    if (filters?.status) {
-      query = query.eq("status", filters.status)
+    if (filters?.category) {
+      query = query.eq("category_id", filters.category)
     }
-    if (filters?.priority) {
-      query = query.eq("priority", filters.priority)
+    if (filters?.supplier) {
+      query = query.eq("supplier_id", filters.supplier)
     }
-    if (filters?.assigned_to) {
-      query = query.eq("assigned_to", filters.assigned_to)
+    if (filters?.low_stock) {
+      query = query.lt("stock_quantity", 10)
     }
     if (filters?.limit) {
       query = query.limit(filters.limit)
@@ -48,17 +47,16 @@ export async function getTickets(filters?: {
   }
 }
 
-// Consultar empleados
 export async function getEmployees(filters?: {
-  department?: string
+  user_type?: string
   active?: boolean
   limit?: number
 }): Promise<DatabaseQueryResult> {
   try {
     let query = supabase.from("employees").select("*").order("name")
 
-    if (filters?.department) {
-      query = query.eq("department", filters.department)
+    if (filters?.user_type) {
+      query = query.eq("user_type", filters.user_type)
     }
     if (filters?.active !== undefined) {
       query = query.eq("active", filters.active)
@@ -77,32 +75,15 @@ export async function getEmployees(filters?: {
   }
 }
 
-// Consultar equipos
-export async function getEquipment(filters?: {
-  status?: string
-  type?: string
-  assigned_to?: string
+export async function getSuppliers(filters?: {
+  active?: boolean
   limit?: number
 }): Promise<DatabaseQueryResult> {
   try {
-    let query = supabase
-      .from("equipment")
-      .select(`
-        *,
-        equipment_type:equipment_types(name, category),
-        assigned_employee:employees(name, email, department),
-        service_station:service_stations(name, location)
-      `)
-      .order("created_at", { ascending: false })
+    let query = supabase.from("suppliers").select("*").order("name")
 
-    if (filters?.status) {
-      query = query.eq("status", filters.status)
-    }
-    if (filters?.type) {
-      query = query.eq("equipment_type_id", filters.type)
-    }
-    if (filters?.assigned_to) {
-      query = query.eq("assigned_to", filters.assigned_to)
+    if (filters?.active !== undefined) {
+      query = query.eq("active", filters.active)
     }
     if (filters?.limit) {
       query = query.limit(filters.limit)
@@ -118,57 +99,78 @@ export async function getEquipment(filters?: {
   }
 }
 
-// Obtener estadísticas generales
+export async function getCategories(filters?: {
+  limit?: number
+}): Promise<DatabaseQueryResult> {
+  try {
+    let query = supabase.from("categories").select("*").order("name")
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return { success: true, data }
+  } catch (error) {
+    return { success: false, error: (error as Error).message }
+  }
+}
+
 export async function getSystemStats(): Promise<DatabaseQueryResult> {
   try {
-    const [ticketsResult, employeesResult, equipmentResult] = await Promise.all([
-      supabase.from("tickets").select("status", { count: "exact" }),
-      supabase.from("employees").select("active", { count: "exact" }),
-      supabase.from("equipment").select("status", { count: "exact" }),
+    const [productsResult, employeesResult, suppliersResult, categoriesResult] = await Promise.all([
+      supabase.from("products").select("*", { count: "exact" }),
+      supabase.from("employees").select("*", { count: "exact" }),
+      supabase.from("suppliers").select("*", { count: "exact" }),
+      supabase.from("categories").select("*", { count: "exact" }),
     ])
 
-    const ticketStats = await supabase
-      .from("tickets")
-      .select("status")
+    // Get low stock products
+    const lowStockProducts = await supabase.from("products").select("*", { count: "exact" }).lt("stock_quantity", 10)
+
+    // Get products by category
+    const productsByCategory = await supabase
+      .from("products")
+      .select(`
+        categories(name),
+        stock_quantity
+      `)
       .then(({ data }) => {
-        const stats = { open: 0, in_progress: 0, resolved: 0, closed: 0 }
-        data?.forEach((ticket) => {
-          if (ticket.status in stats) {
-            stats[ticket.status as keyof typeof stats]++
+        const stats: Record<string, { count: number; total_stock: number }> = {}
+        data?.forEach((product) => {
+          const categoryName = product.categories?.name || "Sin categoría"
+          if (!stats[categoryName]) {
+            stats[categoryName] = { count: 0, total_stock: 0 }
           }
+          stats[categoryName].count++
+          stats[categoryName].total_stock += product.stock_quantity || 0
         })
         return stats
       })
 
-    const equipmentStats = await supabase
-      .from("equipment")
-      .select("status")
-      .then(({ data }) => {
-        const stats = { available: 0, assigned: 0, maintenance: 0, retired: 0 }
-        data?.forEach((equipment) => {
-          if (equipment.status in stats) {
-            stats[equipment.status as keyof typeof stats]++
-          }
-        })
-        return stats
-      })
-
-    const activeEmployees = await supabase.from("employees").select("id", { count: "exact" }).eq("active", true)
+    // Get active suppliers
+    const activeSuppliers = await supabase.from("suppliers").select("*", { count: "exact" }).eq("active", true)
 
     return {
       success: true,
       data: {
-        tickets: {
-          total: ticketsResult.count || 0,
-          by_status: await ticketStats,
+        products: {
+          total: productsResult.count || 0,
+          low_stock: lowStockProducts.count || 0,
+          by_category: await productsByCategory,
         },
         employees: {
           total: employeesResult.count || 0,
-          active: activeEmployees.count || 0,
         },
-        equipment: {
-          total: equipmentResult.count || 0,
-          by_status: await equipmentStats,
+        suppliers: {
+          total: suppliersResult.count || 0,
+          active: activeSuppliers.count || 0,
+        },
+        categories: {
+          total: categoriesResult.count || 0,
         },
       },
     }
@@ -177,50 +179,51 @@ export async function getSystemStats(): Promise<DatabaseQueryResult> {
   }
 }
 
-// Buscar información específica
 export async function searchInformation(
   query: string,
-  type?: "tickets" | "employees" | "equipment",
+  type?: "products" | "employees" | "suppliers" | "categories",
 ): Promise<DatabaseQueryResult> {
   try {
     const results: any = {}
 
-    if (!type || type === "tickets") {
-      const { data: tickets } = await supabase
-        .from("tickets")
+    if (!type || type === "products") {
+      const { data: products } = await supabase
+        .from("products")
         .select(`
           *,
-          assigned_employee:employees(name, email),
-          created_by_employee:employees!tickets_created_by_fkey(name, email)
+          categories(name),
+          suppliers(name, contact_person)
         `)
-        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+        .or(`name.ilike.%${query}%,description.ilike.%${query}%,sku.ilike.%${query}%`)
         .limit(10)
 
-      results.tickets = tickets || []
+      results.products = products || []
     }
 
     if (!type || type === "employees") {
       const { data: employees } = await supabase
         .from("employees")
         .select("*")
-        .or(`name.ilike.%${query}%,email.ilike.%${query}%,department.ilike.%${query}%`)
+        .or(`name.ilike.%${query}%,email.ilike.%${query}%,position.ilike.%${query}%`)
         .limit(10)
 
       results.employees = employees || []
     }
 
-    if (!type || type === "equipment") {
-      const { data: equipment } = await supabase
-        .from("equipment")
-        .select(`
-          *,
-          equipment_type:equipment_types(name, category),
-          assigned_employee:employees(name, email)
-        `)
-        .or(`name.ilike.%${query}%,serial_number.ilike.%${query}%,model.ilike.%${query}%`)
+    if (!type || type === "suppliers") {
+      const { data: suppliers } = await supabase
+        .from("suppliers")
+        .select("*")
+        .or(`name.ilike.%${query}%,contact_person.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10)
 
-      results.equipment = equipment || []
+      results.suppliers = suppliers || []
+    }
+
+    if (!type || type === "categories") {
+      const { data: categories } = await supabase.from("categories").select("*").ilike("name", `%${query}%`).limit(10)
+
+      results.categories = categories || []
     }
 
     return { success: true, data: results }
