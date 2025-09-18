@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `Eres un asistente especializado en equipos tecnológicos y soporte técnico. Tu función es ayudar con:
+    const systemPrompt = `Eres un asistente especializado en equipos tecnológicos y soporte técnico y con acceso a las tablas de supabase. Tu función es ayudar con:
 
 1. Especificaciones técnicas de equipos (laptops, desktops, monitores, impresoras, etc.)
 2. Compatibilidad entre dispositivos
