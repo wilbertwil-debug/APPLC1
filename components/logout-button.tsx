@@ -61,7 +61,7 @@ export function LogoutButton({
     <Button
       variant={variant}
       size={size}
-      className={`flex items-center gap-2 px-0 my-3.5 ${className}`}
+      className={`flex items-center gap-2 px-0 my-3.5 hover:bg-red-600 hover:text-white ${className}`}
       disabled={loading}
       onClick={handleSignOut}
     >
