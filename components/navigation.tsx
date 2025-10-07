@@ -108,9 +108,9 @@ export function Navigation() {
             <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64">
-          <div className="flex flex-col gap-2 py-4">
-            <h2 className="mb-4 px-3 text-lg font-semibold">Sistema de Inventario</h2>
+        <SheetContent side="left" className="w-64 flex flex-col max-h-screen">
+          <div className="flex flex-col gap-2 py-4 overflow-y-auto flex-1">
+            <h2 className="mb-4 px-3 text-lg font-semibold flex-shrink-0">Sistema de Inventario</h2>
             <NavItems isMobile={true} />
           </div>
         </SheetContent>
@@ -122,8 +122,8 @@ export function Navigation() {
           <div className="flex items-center flex-shrink-0 px-4">
             <h2 className="text-lg font-semibold text-gray-900">Sistema de Inventario</h2>
           </div>
-          <div className="mt-8 flex-grow flex flex-col">
-            <nav className="flex-1 space-y-1 bg-blue-300 font-bold px-2.5 py-2.5">
+          <div className="mt-8 flex-grow flex flex-col overflow-hidden">
+            <nav className="flex-1 space-y-1 bg-blue-300 font-bold px-2.5 py-2.5 overflow-y-auto">
               <NavItems isMobile={false} />
             </nav>
           </div>
