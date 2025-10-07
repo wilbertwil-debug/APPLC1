@@ -75,14 +75,14 @@ export function Navigation() {
           {permissions?.canAccessAdminPanel && (
             <Link
               href="/permissions"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:text-primary bg-blue-800 ${
+              className={`flex items-center gap-3 rounded-lg text-sm transition-all hover:text-primary text-primary-foreground py-[5px] px-[15px] bg-blue-950 ${
                 pathname === "/permissions" ? "bg-muted text-primary" : "text-muted-foreground"
               }`}
               onClick={() => isMobile && setOpen(false)}
             >
-              <Shield className="h-4 w-4" />
+              <Shield className="w-[18px] h-[18px] text-cyan-300" />
               Permisos
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs text-slate-200">
                 Admin
               </Badge>
             </Link>
