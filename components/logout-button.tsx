@@ -61,7 +61,7 @@ export function LogoutButton({
     <Button
       variant={variant}
       size={size}
-      className={`flex items-center gap-2 px-[15px] ${className}`}
+      className={`flex items-center gap-2 px-0 my-3.5 ${className}`}
       disabled={loading}
       onClick={handleSignOut}
     >
