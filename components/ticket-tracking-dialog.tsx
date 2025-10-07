@@ -110,14 +110,7 @@ export function TicketTrackingDialog({
       }
 
       const [commentsRes, employeesRes, ticketRes] = await Promise.all([
-        supabase
-          .from("ticket_comments")
-          .select(`
-            *,
-            author:employees!ticket_comments_author_id_fkey(name)
-          `)
-          .eq("ticket_id", ticketId)
-          .order("created_at", { ascending: true }),
+        supabase.from("ticket_comments").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
         supabase.from("employees").select("id, name").order("name"),
         supabase.from("tickets").select("status").eq("id", ticketId).single(),
       ])
@@ -133,7 +126,15 @@ export function TicketTrackingDialog({
           setError(`Error al cargar comentarios: ${commentsRes.error.message}`)
         }
       } else {
-        setComments(commentsRes.data || [])
+        const employeesMap = new Map((employeesRes.data || []).map((emp) => [emp.id, emp.name]))
+        const commentsWithAuthors = (commentsRes.data || []).map((comment) => ({
+          ...comment,
+          author: comment.author_id
+            ? { name: employeesMap.get(comment.author_id) || "Usuario desconocido" }
+            : { name: "Usuario desconocido" },
+        }))
+        setComments(commentsWithAuthors)
+        console.log("[v0] Loaded comments:", commentsWithAuthors.length)
       }
 
       if (employeesRes.error) {
