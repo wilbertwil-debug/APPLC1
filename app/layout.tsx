@@ -10,7 +10,7 @@ import { AuthDebug } from "@/components/auth-debug"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sistema de LOPEZ CASTRO ",
+  title: "Sistema de LPEZ CASTRO ",
   description: "Sistema completo de gestión de inventario tecnológico",
     generator: 'v0.app'
 }
