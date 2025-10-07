@@ -60,7 +60,7 @@ export function Navigation() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg py-2 text-m transition-all hover:text-primary text-white px-[15px] font-light leading-6 bg-sky-800 text-sm font-sans ${
+                className={`flex items-center gap-3 rounded-lg py-2 text-m transition-all hover:text-primary text-white px-[15px] font-light leading-6 bg-sky-800 font-sans text-lg ${
                   isActive ? "bg-muted text-secondar" : "text-muted-foreground"
                 }`}
                 onClick={() => isMobile && setOpen(false)}
