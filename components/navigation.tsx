@@ -60,12 +60,12 @@ export function Navigation() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-m transition-all hover:text-primary font-thin bg-sky-800 text-white ${
+                className={`flex items-center gap-3 rounded-lg py-2 text-m transition-all hover:text-primary text-white px-[15px] font-light leading-6 bg-sky-800 text-sm font-sans ${
                   isActive ? "bg-muted text-secondar" : "text-muted-foreground"
                 }`}
                 onClick={() => isMobile && setOpen(false)}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="text-cyan-300 h-[18px] w-[18px]" />
                 {item.name}
               </Link>
             )
@@ -123,7 +123,7 @@ export function Navigation() {
             <h2 className="text-lg font-semibold text-gray-900">Sistema de Inventario</h2>
           </div>
           <div className="mt-8 flex-grow flex flex-col">
-            <nav className="flex-1 px-2 pb-4 space-y-1 bg-blue-300 font-bold">
+            <nav className="flex-1 space-y-1 bg-blue-300 font-bold px-2.5 py-2.5">
               <NavItems isMobile={false} />
             </nav>
           </div>
