@@ -127,7 +127,7 @@ export function Navigation() {
             <h2 className="text-lg font-semibold text-gray-900 text-center">Sistema de Inventario</h2>
           </div>
           <div className="mt-8 flex-1 flex flex-col min-h-0">
-            <nav className="flex-1 space-y-1 font-bold px-2.5 overflow-y-auto bg-background py-[0]">
+            <nav className="flex-1 space-y-1 font-bold px-2.5 overflow-y-auto text-slate-400 bg-slate-100 py-2.5">
               <NavItems isMobile={false} />
             </nav>
           </div>
