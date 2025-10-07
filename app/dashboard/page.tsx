@@ -113,7 +113,7 @@ function DashboardContent() {
     <div className="flex h-screen bg-gray-50">
       <Navigation />
       <div className="flex-1 md:ml-64">
-        <div className="p-4 md:p-8 text-secondary-foreground">
+        <div className="p-4 md:p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600">Resumen del sistema de inventario</p>
@@ -123,18 +123,18 @@ function DashboardContent() {
             {statCards.map((card, index) => {
               const Icon = card.icon
               return (
-                <Card className="text-card bg-slate-300 border-foreground" key={index}>
+                <Card key={index}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm leading-[2] font-semibold">
+                    <CardTitle className="text-sm font-medium">
                       {card.title}
                     </CardTitle>
-                    <Icon className={`leading-[2.5] h-[25px] w-[25px] ${card.color}`} />
+                    <Icon className={`h-4 w-4 ${card.color}`} />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {loading ? '...' : card.value}
                     </div>
-                    <p className="text-xs text-secondary">
+                    <p className="text-xs text-muted-foreground">
                       {card.description}
                     </p>
                   </CardContent>

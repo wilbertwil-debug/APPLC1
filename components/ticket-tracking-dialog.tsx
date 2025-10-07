@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/hooks/use-toast"
-import { MessageSquare, User, Clock, Eye, EyeOff, Send, Plus, AlertTriangle, Database, Lock } from "lucide-react"
+import { MessageSquare, User, Clock, Eye, EyeOff, Send, Plus, AlertTriangle, Database, Lock, X } from "lucide-react"
 
 interface TicketComment {
   id: string
@@ -55,6 +55,7 @@ export function TicketTrackingDialog({
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [showInternal, setShowInternal] = useState(true)
+  const [showCommentForm, setShowCommentForm] = useState(false)
   const [newComment, setNewComment] = useState("")
   const [commentType, setCommentType] = useState("comment")
   const [isInternal, setIsInternal] = useState(false)
@@ -110,7 +111,14 @@ export function TicketTrackingDialog({
       }
 
       const [commentsRes, employeesRes, ticketRes] = await Promise.all([
-        supabase.from("ticket_comments").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }),
+        supabase
+          .from("ticket_comments")
+          .select(`
+            *,
+            author:employees!ticket_comments_author_id_fkey(name)
+          `)
+          .eq("ticket_id", ticketId)
+          .order("created_at", { ascending: true }),
         supabase.from("employees").select("id, name").order("name"),
         supabase.from("tickets").select("status").eq("id", ticketId).single(),
       ])
@@ -126,15 +134,7 @@ export function TicketTrackingDialog({
           setError(`Error al cargar comentarios: ${commentsRes.error.message}`)
         }
       } else {
-        const employeesMap = new Map((employeesRes.data || []).map((emp) => [emp.id, emp.name]))
-        const commentsWithAuthors = (commentsRes.data || []).map((comment) => ({
-          ...comment,
-          author: comment.author_id
-            ? { name: employeesMap.get(comment.author_id) || "Usuario desconocido" }
-            : { name: "Usuario desconocido" },
-        }))
-        setComments(commentsWithAuthors)
-        console.log("[v0] Loaded comments:", commentsWithAuthors.length)
+        setComments(commentsRes.data || [])
       }
 
       if (employeesRes.error) {
@@ -194,6 +194,7 @@ export function TicketTrackingDialog({
       setNewComment("")
       setCommentType("comment")
       setIsInternal(false)
+      setShowCommentForm(false)
       await fetchData()
 
       toast({
@@ -319,7 +320,6 @@ export function TicketTrackingDialog({
             </Alert>
           )}
 
-          {/* Controles */}
           {tableExists && (
             <div className="flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2">
@@ -335,9 +335,114 @@ export function TicketTrackingDialog({
                 )}
                 <Badge variant="outline">{filteredComments.length} comentarios</Badge>
               </div>
-              <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-                Actualizar
-              </Button>
+              <div className="flex items-center gap-2">
+                {canAddComments && !isTicketClosed && (
+                  <Button
+                    variant={showCommentForm ? "secondary" : "default"}
+                    size="sm"
+                    onClick={() => setShowCommentForm(!showCommentForm)}
+                  >
+                    {showCommentForm ? (
+                      <>
+                        <X className="h-4 w-4 mr-2" />
+                        Cancelar
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar comentario
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+                  Actualizar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {tableExists && canAddComments && !isTicketClosed && showCommentForm && (
+            <div className="flex-shrink-0 border rounded-lg bg-gray-50/50">
+              <div className="p-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="author">Autor *</Label>
+                      <Select value={authorId} onValueChange={setAuthorId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar autor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employee.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Tipo</Label>
+                      <Select value={commentType} onValueChange={setCommentType}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="comment">Comentario</SelectItem>
+                          <SelectItem value="status_change">Cambio de Estado</SelectItem>
+                          <SelectItem value="assignment">Asignación</SelectItem>
+                          <SelectItem value="resolution">Resolución</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="visibility">Visibilidad</Label>
+                      <Select
+                        value={isInternal ? "internal" : "public"}
+                        onValueChange={(value) => setIsInternal(value === "internal")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="public">Público</SelectItem>
+                          {canViewInternal && <SelectItem value="internal">Interno</SelectItem>}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comment">Comentario *</Label>
+                    <Textarea
+                      id="comment"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Escribe tu comentario aquí..."
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setShowCommentForm(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={submitting || !newComment.trim() || !authorId}>
+                      {submitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Agregar Comentario
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 
@@ -359,7 +464,7 @@ export function TicketTrackingDialog({
                       <p className="text-gray-500 mb-4">Este ticket aún no tiene comentarios o seguimiento.</p>
                       {!isTicketClosed && (
                         <p className="text-gray-400 text-sm">
-                          Sé el primero en agregar un comentario para iniciar el seguimiento.
+                          Haz clic en "Agregar comentario" para iniciar el seguimiento.
                         </p>
                       )}
                     </div>
@@ -413,91 +518,6 @@ export function TicketTrackingDialog({
             </div>
           )}
         </div>
-
-        {tableExists && canAddComments && !isTicketClosed && (
-          <div className="flex-shrink-0 border-t bg-gray-50/50">
-            <div className="p-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Plus className="h-4 w-4" />
-                <span className="font-medium">Agregar Comentario</span>
-              </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="author">Autor *</Label>
-                    <Select value={authorId} onValueChange={setAuthorId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar autor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Tipo</Label>
-                    <Select value={commentType} onValueChange={setCommentType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="comment">Comentario</SelectItem>
-                        <SelectItem value="status_change">Cambio de Estado</SelectItem>
-                        <SelectItem value="assignment">Asignación</SelectItem>
-                        <SelectItem value="resolution">Resolución</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="visibility">Visibilidad</Label>
-                    <Select
-                      value={isInternal ? "internal" : "public"}
-                      onValueChange={(value) => setIsInternal(value === "internal")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Público</SelectItem>
-                        {canViewInternal && <SelectItem value="internal">Interno</SelectItem>}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="comment">Comentario *</Label>
-                  <Textarea
-                    id="comment"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Escribe tu comentario aquí..."
-                    rows={3}
-                    required
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={submitting || !newComment.trim() || !authorId}>
-                    {submitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Guardando...
-                      </>
-                    ) : (
-                      <div className="flex">
-                        <Send className="h-4 w-4 mr-2" />
-                        Agregar Comentario
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )
