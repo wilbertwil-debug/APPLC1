@@ -143,7 +143,7 @@ export default function TicketsPage() {
             creator:employees!tickets_created_by_fkey(name, email),
             assignee:employees!tickets_assigned_to_fkey(name, email)
           `)
-          .order("created_at", { descending: false }),
+          .order("created_at", { ascending: false }),
         supabase.from("employees").select("*"),
         supabase.from("equipment").select("*"),
         supabase.from("service_stations").select("*"),
