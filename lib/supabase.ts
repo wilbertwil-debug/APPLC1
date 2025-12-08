@@ -1,13 +1,23 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
-// Obtener las variables de entorno (solo las que empiezan con NEXT_PUBLIC_ están disponibles en el cliente)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 let supabaseInstance: ReturnType<typeof createSupabaseClient> | null = null
+
+export const createClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
+}
 
 export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
   get: (target, prop) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
     if (!supabaseUrl || !supabaseAnonKey) {
       throw new Error(
         "Supabase is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.",
@@ -22,15 +32,9 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
   },
 })
 
-export const createClient = () => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null
-  }
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
-}
-
-// Función para verificar si Supabase está configurado
 export const isSupabaseConfigured = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   return !!(supabaseUrl && supabaseAnonKey)
 }
 
