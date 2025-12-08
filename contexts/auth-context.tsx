@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase"
 import type { User } from "@supabase/supabase-js"
 
 interface AuthContextType {
@@ -24,40 +24,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
 
-    // Verificar configuración de Supabase primero
-    const checkSupabaseConfig = () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-      if (!supabaseUrl || !supabaseAnonKey) {
-        console.error("❌ Supabase not configured")
-        setError("Supabase no está configurado. Verifica las variables de entorno.")
-        setLoading(false)
-        return false
-      }
-      return true
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn("⚠️ Supabase is not configured")
+      setError("Supabase no está configurado. Verifica las variables de entorno en tu proyecto Vercel.")
+      setLoading(false)
+      return
+    }
+
+    const supabase = createClient()
+    if (!supabase) {
+      setError("No se pudo inicializar Supabase")
+      setLoading(false)
+      return
     }
 
     // Obtener sesión inicial
     const getInitialSession = async () => {
       try {
-        if (!checkSupabaseConfig()) return
-
         console.log("🔍 Getting initial session...")
         const {
           data: { session },
-          error,
+          error: sessionError,
         } = await supabase.auth.getSession()
 
         if (!mounted) return
 
-        if (error) {
-          console.error("Error getting session:", error)
-          if (error.message.includes("NetworkError") || error.message.includes("fetch")) {
-            setError("Error de conexión con Supabase. Verifica tu conexión a internet y la configuración.")
-          } else {
-            setError(`Error de autenticación: ${error.message}`)
-          }
+        if (sessionError) {
+          console.error("Error getting session:", sessionError)
+          setError("Error de conexión con Supabase. Verifica tu configuración.")
           setUser(null)
         } else {
           console.log("📋 Initial session:", session?.user?.email || "no user")
@@ -67,11 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error: any) {
         console.error("Error in getInitialSession:", error)
         if (mounted) {
-          if (error.name === "TypeError" && error.message.includes("NetworkError")) {
-            setError("Error de red: No se puede conectar con Supabase. Verifica la configuración y tu conexión.")
-          } else {
-            setError(`Error inesperado: ${error.message}`)
-          }
+          setError("Error de conexión con Supabase. Verifica tu configuración.")
           setUser(null)
         }
       } finally {
@@ -81,27 +74,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession()
 
-    if (checkSupabaseConfig()) {
-      // Escuchar cambios de autenticación
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!mounted) return
+    // Escuchar cambios de autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
 
-        console.log("🔐 Auth event:", event, session?.user?.email || "no user")
-        setUser(session?.user ?? null)
-        setLoading(false)
-        setError(null)
-      })
-
-      return () => {
-        mounted = false
-        subscription.unsubscribe()
-      }
-    }
+      console.log("🔐 Auth event:", event, session?.user?.email || "no user")
+      setUser(session?.user ?? null)
+      setLoading(false)
+      setError(null)
+    })
 
     return () => {
       mounted = false
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -109,8 +96,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("🔑 Attempting sign in for:", email)
 
     try {
+      const supabase = createClient()
+      if (!supabase) {
+        throw new Error("Supabase no está configurado")
+      }
+
       // Primero verificar si el usuario existe en nuestra tabla
-      const { data: userExists } = await supabase.from("users").select("email, name").eq("email", email).single()
+      const { data: userExists } = await supabase.from("users").select("email, name").eq("email", email).maybeSingle()
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -174,6 +166,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("🚪 Starting logout...")
 
     try {
+      const supabase = createClient()
+      if (!supabase) {
+        throw new Error("Supabase no está configurado")
+      }
+
       const { error } = await supabase.auth.signOut()
       if (error) {
         console.error("Supabase logout error:", error)
@@ -202,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <div className="max-w-md mx-auto text-center p-6 bg-white rounded-lg shadow-lg">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error de Configuración</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4 whitespace-pre-wrap">{error}</p>
           <div className="text-sm text-gray-500">
             <p className="mb-2">Para configurar Supabase:</p>
             <ol className="text-left list-decimal list-inside space-y-1">
