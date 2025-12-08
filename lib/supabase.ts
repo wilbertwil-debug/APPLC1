@@ -6,11 +6,22 @@ export const createClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  console.log("[v0] Supabase URL:", supabaseUrl ? "✓ Set" : "✗ Missing")
+  console.log("[v0] Supabase Anon Key:", supabaseAnonKey ? "✓ Set" : "✗ Missing")
+
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("[v0] Missing Supabase configuration")
     return null
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  try {
+    const client = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    console.log("[v0] Supabase client created successfully")
+    return client
+  } catch (error) {
+    console.error("[v0] Failed to create Supabase client:", error)
+    return null
+  }
 }
 
 export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, {
@@ -25,7 +36,13 @@ export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, 
     }
 
     if (!supabaseInstance) {
-      supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
+      try {
+        supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
+        console.log("[v0] Supabase instance initialized on first access")
+      } catch (error) {
+        console.error("[v0] Failed to initialize Supabase instance:", error)
+        throw error
+      }
     }
 
     return (supabaseInstance as any)[prop]

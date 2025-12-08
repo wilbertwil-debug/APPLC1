@@ -112,8 +112,8 @@
 
 @layer base {
   * {
-    /* Use CSS property instead of invalid @apply border-border */
     border-color: hsl(var(--border) / 1);
+    @apply outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;

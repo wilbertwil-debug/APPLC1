@@ -98,43 +98,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const supabase = createClient()
       if (!supabase) {
-        throw new Error("Supabase no está configurado")
+        throw new Error("Supabase no está configurado correctamente")
       }
 
       console.log("[v0] Supabase client created successfully")
-      console.log("[v0] Attempting auth.signInWithPassword...")
+      console.log("[v0] Supabase URL check: attempting connection...")
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { data, error } = await supabase.auth
+        .signInWithPassword({
+          email,
+          password,
+        })
+        .catch((networkError: any) => {
+          console.error("[v0] Network error during authentication:", {
+            message: networkError.message,
+            code: networkError.code,
+            statusText: networkError.statusText,
+          })
+          return { data: null, error: networkError }
+        })
 
       console.log("[v0] Sign in response received", { hasData: !!data, hasError: !!error })
 
       if (error) {
-        console.error("[v0] Supabase auth error:", error)
+        console.error("[v0] Supabase auth error:", error.message)
 
-        // Mapear errores específicos a mensajes más claros
         let errorMessage = "Error de autenticación"
 
-        switch (error.message) {
-          case "Invalid login credentials":
-            errorMessage = `🔐 **Contraseña incorrecta o usuario no encontrado**\n\nVerifica que el email y la contraseña sean correctos.`
-            break
-          case "Email not confirmed":
-            errorMessage = `📧 **Email no confirmado**\n\nDebes confirmar tu email antes de iniciar sesión.\n\nRevisa tu bandeja de entrada y haz clic en el enlace de confirmación.`
-            break
-          case "Too many requests":
-            errorMessage = `⏰ **Demasiados intentos**\n\nHas realizado muchos intentos de inicio de sesión.\n\nEspera **5 minutos** antes de intentar nuevamente.`
-            break
-          case "User not found":
-            errorMessage = `👤 **Usuario no encontrado**\n\nNo existe una cuenta con el email: **${email}**\n\n**¿Es tu primera vez?** Contacta al administrador para crear tu cuenta.`
-            break
-          case "Signup not allowed for this instance":
-            errorMessage = `🚫 **Registro deshabilitado**\n\nEl registro de nuevos usuarios está deshabilitado.\n\nContacta al administrador del sistema.`
-            break
-          default:
-            errorMessage = `⚠️ **Error de conexión**\n\n${error.message}\n\nSi el problema persiste, contacta al soporte técnico.`
+        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
+          errorMessage = `⚠️ **Error de conexión**\n\nNo se puede conectar con el servidor de autenticación.\n\nVerifica:\n1. Tu conexión a internet\n2. Que las variables de entorno estén configuradas\n3. Que tu Supabase project esté activo\n\nSi el problema persiste, contacta al soporte técnico.`
+        } else {
+          switch (error.message) {
+            case "Invalid login credentials":
+              errorMessage = `🔐 **Contraseña incorrecta o usuario no encontrado**\n\nVerifica que el email y la contraseña sean correctos.`
+              break
+            case "Email not confirmed":
+              errorMessage = `📧 **Email no confirmado**\n\nDebes confirmar tu email antes de iniciar sesión.\n\nRevisa tu bandeja de entrada y haz clic en el enlace de confirmación.`
+              break
+            case "Too many requests":
+              errorMessage = `⏰ **Demasiados intentos**\n\nHas realizado muchos intentos de inicio de sesión.\n\nEspera **5 minutos** antes de intentar nuevamente.`
+              break
+            case "User not found":
+              errorMessage = `👤 **Usuario no encontrado**\n\nNo existe una cuenta con el email: **${email}**\n\n**¿Es tu primera vez?** Contacta al administrador para crear tu cuenta.`
+              break
+            case "Signup not allowed for this instance":
+              errorMessage = `🚫 **Registro deshabilitado**\n\nEl registro de nuevos usuarios está deshabilitado.\n\nContacta al administrador del sistema.`
+              break
+            default:
+              errorMessage = `⚠️ **Error de conexión**\n\n${error.message}\n\nSi el problema persiste, contacta al soporte técnico.`
+          }
         }
 
         const customError = new Error(errorMessage)
