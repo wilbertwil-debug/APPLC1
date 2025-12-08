@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    console.log("🔑 Attempting sign in for:", email)
+    console.log("[v0] Attempting sign in for:", email)
 
     try {
       const supabase = createClient()
@@ -101,27 +101,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Supabase no está configurado")
       }
 
-      // Primero verificar si el usuario existe en nuestra tabla
-      const { data: userExists } = await supabase.from("users").select("email, name").eq("email", email).maybeSingle()
+      console.log("[v0] Supabase client created successfully")
+      console.log("[v0] Attempting auth.signInWithPassword...")
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log("[v0] Sign in response received", { hasData: !!data, hasError: !!error })
+
       if (error) {
-        console.error("Supabase auth error:", error)
+        console.error("[v0] Supabase auth error:", error)
 
         // Mapear errores específicos a mensajes más claros
         let errorMessage = "Error de autenticación"
 
         switch (error.message) {
           case "Invalid login credentials":
-            if (!userExists) {
-              errorMessage = `❌ **Usuario no encontrado**\n\nNo existe una cuenta registrada con el email: **${email}**\n\n**Usuarios disponibles para prueba:**\n• admin@empresa.com\n• manager@empresa.com\n• user@empresa.com`
-            } else {
-              errorMessage = `🔐 **Contraseña incorrecta**\n\nEl email **${email}** existe, pero la contraseña no es correcta.\n\n**Para usuarios de prueba:**\n• admin@empresa.com → admin123\n• manager@empresa.com → manager123\n• user@empresa.com → user123`
-            }
+            errorMessage = `🔐 **Contraseña incorrecta o usuario no encontrado**\n\nVerifica que el email y la contraseña sean correctos.`
             break
           case "Email not confirmed":
             errorMessage = `📧 **Email no confirmado**\n\nDebes confirmar tu email antes de iniciar sesión.\n\nRevisa tu bandeja de entrada y haz clic en el enlace de confirmación.`
@@ -150,14 +148,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         )
       }
 
-      console.log("✅ Sign in successful:", data.user.email)
+      console.log("[v0] Sign in successful:", data.user.email)
 
       // Esperar un poco para que se propague la sesión
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       return data
     } catch (error) {
-      console.error("Sign in error:", error)
+      console.error("[v0] Sign in error:", error)
       throw error
     }
   }

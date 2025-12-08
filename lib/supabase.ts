@@ -1,6 +1,6 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
 
-let supabaseInstance: ReturnType<typeof createSupabaseClient> | null = null
+let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null
 
 export const createClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -10,10 +10,10 @@ export const createClient = () => {
     return null
   }
 
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
 
-export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
+export const supabase = new Proxy({} as ReturnType<typeof createBrowserClient>, {
   get: (target, prop) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -25,7 +25,7 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
     }
 
     if (!supabaseInstance) {
-      supabaseInstance = createSupabaseClient(supabaseUrl, supabaseAnonKey)
+      supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
     }
 
     return (supabaseInstance as any)[prop]
